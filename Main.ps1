@@ -20,7 +20,7 @@ ForEach ($vsub in $subscriptions){
     Write-Host “Working on “ $vsub
     Write-Host
     # Fetch all Ressources in Subscription
-    $Roleassignment = Get-AzRoleAssignment -Scope $Scope
+    $Roleassignment = Get-AzRoleAssignment -Scope $Scope -IncludeClassicAdministrators
     $allResources = Get-AzResource
     ForEach ($resource in $allResources){
         # Check if Ressourcelocation is the same as $location variable
@@ -83,5 +83,3 @@ ForEach ($vsub in $subscriptions){
     $excel.Quit()
     # remove csv File
     Remove-Item $outfile
-
-
