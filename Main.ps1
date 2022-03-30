@@ -4,11 +4,10 @@ $tenantId = (Get-AzContext).Tenant.Id
 # Variable for defining the location, which is used to filter 
 # example "southeastasia"
 $location = "southeastasia"
-#Generate csv File to later convertation to Excel file. Fill in your path!
-# example ".\output.xlsx"
 $outfile = "filepath_for_temporary_csv_file"
 $outputXLSX = "filepath_for_Excel_report"
 #safe headers for csv file
+$tenantId = (Get-AzContext).Tenant.Id
 Add-Content -Path $outfile  -Value '"Subscription_Name","Subscription_ID","Role_Name","Username","Email"'
 $allResources = @()
 $subscriptions=Get-AzSubscription -TenantId $tenantId
@@ -16,23 +15,24 @@ $subscriptions=Get-AzSubscription -TenantId $tenantId
 ForEach ($vsub in $subscriptions){
     #Select curent subscription to get ressource details
     Select-AZSubscription $vsub.SubscriptionID
-
+    $Scope = "/subscriptions/"+$vsub.SubscriptionID
     Write-Host
     Write-Host “Working on “ $vsub
     Write-Host
     # Fetch all Ressources in Subscription
+    $Roleassignment = Get-AzRoleAssignment -Scope $Scope
     $allResources = Get-AzResource
     ForEach ($resource in $allResources){
         # Check if Ressourcelocation is the same as $location variable
         if($resource.Location -eq $location){
             # Get Role-Assignements of subscription
-             $Roleassignment = Get-AzRoleAssignment
-             #Loop over all Assignements
+             
              ForEach( $user in $Roleassignment){
-             # Import csv file for appending a new row
-             $csvimport = Import-Csv $outfile
-             # Create new Custom Object to append to CSV
-             $newrow = [PSCustomObject] @{
+                if ($user.Scope -eq $Scope) {
+                    # Import csv file for appending a new row
+                $csvimport = Import-Csv $outfile
+                # Create new Custom Object to append to CSV
+                 $newrow = [PSCustomObject] @{
                 "Subscription_Name" = $vsub.Name;
                 "Subscription_ID" = $vsub.SubscriptionId;
                 "Role_Name" = $user.RoleDefinitionName;
@@ -40,6 +40,8 @@ ForEach ($vsub in $subscriptions){
                 "Email" = $user.SignInName;
             }
             $newrow | Export-CSV $outfile -Append -NoTypeInformation
+                }
+             
         }
         Break
         }
