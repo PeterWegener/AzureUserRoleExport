@@ -1,6 +1,6 @@
-﻿
-# Create a user with the according rights before and exchange witht the correct tenant
+﻿#Connect to Azure
 Connect-AzAccount -Tenant '00000000-0000-0000-0000-000000000000' 
+$tenantId = (Get-AzContext).Tenant.Id
 # Variable for defining the location, which is used to filter 
 # example "southeastasia"
 $location = "southeastasia"
@@ -9,7 +9,6 @@ $location = "southeastasia"
 $outfile = "filepath_for_temporary_csv_file"
 $outputXLSX = "filepath_for_Excel_report"
 #safe headers for csv file
-
 Add-Content -Path $outfile  -Value '"Subscription_Name","Subscription_ID","Role_Name","Username","Email"'
 $allResources = @()
 $subscriptions=Get-AzSubscription -TenantId $tenantId
@@ -28,17 +27,21 @@ ForEach ($vsub in $subscriptions){
         if($resource.Location -eq $location){
             # Get Role-Assignements of subscription
              $Roleassignment = Get-AzRoleAssignment
+             #Loop over all Assignements
+             ForEach( $user in $Roleassignment){
              # Import csv file for appending a new row
              $csvimport = Import-Csv $outfile
              # Create new Custom Object to append to CSV
              $newrow = [PSCustomObject] @{
                 "Subscription_Name" = $vsub.Name;
                 "Subscription_ID" = $vsub.SubscriptionId;
-                "Role_Name" = $Roleassignment.RoleDefinitionName;
-                "Username" = $Roleassignment.DisplayName;
-                "Email" = $Roleassignment.SignInName;
+                "Role_Name" = $user.RoleDefinitionName;
+                "Username" = $user.DisplayName;
+                "Email" = $user.SignInName;
             }
             $newrow | Export-CSV $outfile -Append -NoTypeInformation
+        }
+        Break
         }
     }
 }
