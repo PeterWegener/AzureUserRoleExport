@@ -9,9 +9,10 @@ $location = "southeastasia"
 $outfile = "filepath_for_temporary_csv_file"
 $outputXLSX = "filepath_for_Excel_report"
 #safe headers for csv file
+
 Add-Content -Path $outfile  -Value '"Subscription_Name","Subscription_ID","Role_Name","Username","Email"'
 $allResources = @()
-$subscriptions=Get-AzSubscription
+$subscriptions=Get-AzSubscription -TenantId $tenantId
 
 ForEach ($vsub in $subscriptions){
     #Select curent subscription to get ressource details
